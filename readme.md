@@ -28,6 +28,9 @@ SecureCryptoX is a secure cryptocurrency wallet management system built using **
 - HTML, CSS, JavaScript
 
 ## Run Project
+```bash
+cd SecureCryptoX
+```
 
 Install dependencies:
 
@@ -37,9 +40,6 @@ pip install -r requirements.txt
 
 Run application:
 
-```bash
-cd SecureCryptoX
-```
 ```bash
 python app.py
 ```
