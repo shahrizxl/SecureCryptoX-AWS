@@ -38,6 +38,9 @@ pip install -r requirements.txt
 Run application:
 
 ```bash
+cd SecureCryptoX
+```
+```bash
 python app.py
 ```
 
