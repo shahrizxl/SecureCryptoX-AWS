@@ -1,0 +1,6 @@
+CREATE SECURITY POLICY TransactionSecurityPolicy
+ADD FILTER PREDICATE
+RLS.FilterTransactions(user_id)
+ON dbo.Transactions
+WITH (STATE = ON);
+GO

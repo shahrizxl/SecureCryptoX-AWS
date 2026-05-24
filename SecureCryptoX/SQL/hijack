@@ -1,0 +1,13 @@
+CREATE TRIGGER PreventSuspiciousLogin
+ON ALL SERVER
+FOR LOGON
+AS
+BEGIN
+
+    IF ORIGINAL_LOGIN() = 'hacker'
+    BEGIN
+        ROLLBACK;
+    END
+
+END;
+GO

@@ -1,0 +1,37 @@
+-- =========================================
+-- CREATE FUNCTION
+-- =========================================
+
+CREATE FUNCTION RLS.FilterTransactions
+(
+    @user_id INT
+)
+RETURNS TABLE
+WITH SCHEMABINDING
+AS
+RETURN
+(
+    SELECT 1 AS access_result
+    WHERE
+        -- admin and manager identified by SQL login
+        ORIGINAL_LOGIN() IN ('crypto_admin', 'crypto_manager')
+
+        OR
+        (
+            ORIGINAL_LOGIN() = 'crypto_user'
+            AND @user_id = CAST(SESSION_CONTEXT(N'user_id') AS INT)
+        )
+);
+GO
+
+
+-- =========================================
+-- CREATE SECURITY POLICY
+-- =========================================
+
+CREATE SECURITY POLICY TransactionSecurityPolicy
+ADD FILTER PREDICATE
+RLS.FilterTransactions(user_id)
+ON dbo.Transactions
+WITH (STATE = ON);
+GO

@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - SecureCryptoX</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Sora:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; }
+
+        body {
+            font-family: 'Sora', sans-serif;
+            background: #0a0f1e;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-image:
+                radial-gradient(ellipse 600px 400px at 20% 20%, rgba(59,130,246,0.07) 0%, transparent 70%),
+                radial-gradient(ellipse 400px 500px at 80% 80%, rgba(6,182,212,0.06) 0%, transparent 70%);
+        }
+
+        .container {
+            background: #111827;
+            padding: 40px;
+            border-radius: 14px;
+            width: 380px;
+            box-shadow: 0 0 0 1px rgba(255,255,255,0.06), 0 20px 60px rgba(0,0,0,0.5);
+        }
+
+        h1 {
+            font-family: 'Space Mono', monospace;
+            text-align: center;
+            margin: 0 0 28px;
+            font-size: 22px;
+            letter-spacing: -0.5px;
+            color: #f1f5f9;
+        }
+
+        h1 span { color: #3b82f6; }
+
+        .field { margin-bottom: 14px; position: relative; }
+
+        /* ===== PASSWORD WRAPPER ===== */
+        .password-wrapper { position: relative; }
+
+        .toggle-pw {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #64748b;
+            font-size: 13px;
+            user-select: none;
+            transition: color 0.2s;
+            background: none;
+            border: none;
+            padding: 0;
+            width: auto;
+            margin: 0;
+            box-shadow: none;
+        }
+        .toggle-pw:hover { color: #94a3b8; transform: translateY(-50%); box-shadow: none; filter: none; }
+
+        input {
+            width: 100%;
+            padding: 12px 14px;
+            background: #1e293b;
+            border: 1.5px solid #334155;
+            border-radius: 8px;
+            color: white;
+            font-family: 'Sora', sans-serif;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+            margin-bottom: 0;
+        }
+
+        input::placeholder { color: #64748b; }
+        input:focus { border-color: #3b82f6; }
+
+        /* ===== BUTTON ===== */
+        button[type="submit"] {
+            width: 100%;
+            padding: 13px;
+            border: none;
+            border-radius: 8px;
+            background: #3b82f6;
+            color: white;
+            font-family: 'Sora', sans-serif;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 18px;
+            transition: background 0.2s, transform 0.1s;
+            letter-spacing: 0.01em;
+        }
+
+        button[type="submit"]:hover { background: #2563eb; }
+        button[type="submit"]:active { transform: scale(0.99); }
+        button[type="submit"]:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        /* ===== FLASH MESSAGES ===== */
+        .error-msg {
+            background: rgba(239,68,68,0.15);
+            border: 1px solid rgba(239,68,68,0.4);
+            color: #fca5a5;
+            padding: 10px 12px;
+            border-radius: 7px;
+            margin-bottom: 14px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .success-msg {
+            background: rgba(34,197,94,0.15);
+            border: 1px solid rgba(34,197,94,0.4);
+            color: #86efac;
+            padding: 10px 12px;
+            border-radius: 7px;
+            margin-bottom: 14px;
+            font-size: 13px;
+        }
+
+        /* ===== LOCKOUT ===== */
+        .lockout-msg {
+            background: rgba(245,158,11,0.12);
+            border: 1px solid rgba(245,158,11,0.4);
+            color: #fcd34d;
+            padding: 10px 12px;
+            border-radius: 7px;
+            margin-bottom: 14px;
+            font-size: 13px;
+            text-align: center;
+        }
+
+        .lockout-msg .countdown {
+            font-size: 26px;
+            font-family: 'Space Mono', monospace;
+            font-weight: 700;
+            display: block;
+            margin-top: 6px;
+            color: #f59e0b;
+        }
+
+        /* ===== LINK ===== */
+        .link {
+            text-align: center;
+            margin-top: 18px;
+            font-size: 13px;
+            color: #64748b;
+        }
+
+        .link a {
+            color: #3b82f6;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .link a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <h1>Secure<span>CryptoX</span></h1>
+
+    <!-- ===== FLASH MESSAGES ===== -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          {% if category == "lockout" %}
+            <div class="lockout-msg">
+                🔒 Too many failed attempts
+                <span class="countdown" id="countdown">{{ message }}s</span>
+            </div>
+          {% else %}
+            <div class="{{ category }}-msg">{{ message }}</div>
+          {% endif %}
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <form action="/login" method="POST" id="loginForm">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="field">
+            <input
+                type="text"
+                name="username"
+                placeholder="Username"
+                required
+            >
+        </div>
+
+        <div class="field">
+            <div class="password-wrapper">
+                <input
+                    type="password"
+                    name="password"
+                    id="loginPassword"
+                    placeholder="Password"
+                    required
+                    autocomplete="current-password"
+                >
+                <span class="toggle-pw" id="togglePw">show</span>
+            </div>
+        </div>
+
+        <button type="submit" id="submitBtn">Login</button>
+
+    </form>
+
+    <div class="link">
+        <p>Don't have an account? <a href="/signup">Sign Up</a></p>
+    </div>
+
+</div>
+
+<script>
+    // ===== SHOW/HIDE PASSWORD =====
+    const togglePw   = document.getElementById('togglePw');
+    const loginPw    = document.getElementById('loginPassword');
+
+    togglePw.addEventListener('click', () => {
+        if (loginPw.type === 'password') {
+            loginPw.type = 'text';
+            togglePw.textContent = 'hide';
+        } else {
+            loginPw.type = 'password';
+            togglePw.textContent = 'show';
+        }
+    });
+
+    // ===== LOCKOUT COUNTDOWN =====
+    const countdownEl = document.getElementById('countdown');
+    const submitBtn   = document.getElementById('submitBtn');
+    const loginForm   = document.getElementById('loginForm');
+
+    if (countdownEl) {
+        let seconds = parseInt(countdownEl.textContent);
+
+        submitBtn.disabled = true;
+        loginForm.querySelectorAll('input').forEach(i => i.disabled = true);
+
+        const timer = setInterval(() => {
+            seconds--;
+            countdownEl.textContent = seconds + 's';
+
+            if (seconds <= 0) {
+                clearInterval(timer);
+                submitBtn.disabled = false;
+                loginForm.querySelectorAll('input').forEach(i => i.disabled = false);
+                countdownEl.closest('.lockout-msg').remove();
+            }
+        }, 1000);
+    }
+</script>
+
+</body>
+</html>

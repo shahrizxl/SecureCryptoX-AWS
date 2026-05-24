@@ -1,0 +1,12 @@
+OPEN SYMMETRIC KEY CryptoSymmetricKey
+DECRYPTION BY CERTIFICATE CryptoCertificate;
+GO
+
+SELECT
+wallet_id,
+CONVERT(
+    VARCHAR,
+    DecryptByKey(encrypted_balance)
+) AS decrypted_balance
+FROM Wallets;
+GO

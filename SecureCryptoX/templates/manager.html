@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manager Dashboard — SecureCryptoX</title>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg:        #080c14;
+            --surface:   #0e1420;
+            --card:      #121a28;
+            --border:    #1c2a3e;
+            --accent:    #00d4aa;
+            --accent2:   #0ea5e9;
+            --warn:      #f59e0b;
+            --danger:    #ef4444;
+            --escalate:  #a855f7;
+            --text:      #e2e8f0;
+            --muted:     #64748b;
+            --mono:      'IBM Plex Mono', monospace;
+            --sans:      'DM Sans', sans-serif;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: var(--sans);
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            background-image:
+                radial-gradient(ellipse 800px 500px at 0% 0%, rgba(0,212,170,0.04) 0%, transparent 60%),
+                radial-gradient(ellipse 600px 600px at 100% 100%, rgba(14,165,233,0.04) 0%, transparent 60%);
+        }
+
+        /* ===== TOPBAR ===== */
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 32px;
+            height: 60px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .topbar-brand {
+            font-family: var(--mono);
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--accent);
+            letter-spacing: 0.05em;
+        }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .badge-alert {
+            background: var(--danger);
+            color: white;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 99px;
+            font-family: var(--mono);
+        }
+
+        .topbar-user {
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .topbar-user span {
+            color: var(--text);
+            font-weight: 500;
+        }
+
+        .btn-logout {
+            font-size: 12px;
+            padding: 6px 14px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: transparent;
+            color: var(--muted);
+            cursor: pointer;
+            text-decoration: none;
+            transition: 0.2s;
+            font-family: var(--sans);
+        }
+        .btn-logout:hover { border-color: var(--danger); color: var(--danger); }
+
+        /* ===== LAYOUT ===== */
+        .page {
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 32px 24px;
+        }
+
+        .page-header {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            margin-bottom: 28px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .page-title {
+            font-family: var(--mono);
+            font-size: 22px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .page-title small {
+            display: block;
+            font-family: var(--sans);
+            font-size: 13px;
+            color: var(--muted);
+            font-weight: 400;
+            margin-top: 4px;
+        }
+
+        /* ===== DATE FILTER ===== */
+        .filter-bar {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .filter-label {
+            font-size: 12px;
+            color: var(--muted);
+            margin-right: 4px;
+        }
+
+        .filter-btn {
+            font-family: var(--mono);
+            font-size: 12px;
+            padding: 6px 14px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--muted);
+            cursor: pointer;
+            text-decoration: none;
+            transition: 0.2s;
+        }
+
+        .filter-btn:hover,
+        .filter-btn.active {
+            background: var(--accent);
+            color: #000;
+            border-color: var(--accent);
+        }
+
+        .export-btn {
+            font-family: var(--mono);
+            font-size: 12px;
+            padding: 6px 14px;
+            border-radius: 6px;
+            border: 1px solid var(--accent2);
+            background: transparent;
+            color: var(--accent2);
+            cursor: pointer;
+            text-decoration: none;
+            transition: 0.2s;
+        }
+        .export-btn:hover { background: var(--accent2); color: #000; }
+
+        /* ===== STAT CARDS ===== */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+
+        .stat-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px 22px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent), transparent);
+        }
+
+        .stat-card.warn::before { background: linear-gradient(90deg, var(--warn), transparent); }
+        .stat-card.info::before { background: linear-gradient(90deg, var(--accent2), transparent); }
+        .stat-card.danger::before { background: linear-gradient(90deg, var(--danger), transparent); }
+
+        .stat-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--muted);
+            margin-bottom: 10px;
+        }
+
+        .stat-value {
+            font-family: var(--mono);
+            font-size: 26px;
+            font-weight: 600;
+            color: var(--text);
+            line-height: 1;
+        }
+
+        .stat-sub {
+            margin-top: 8px;
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .stat-change {
+            font-family: var(--mono);
+            font-size: 12px;
+            margin-top: 6px;
+        }
+
+        .stat-change.up   { color: var(--accent); }
+        .stat-change.down { color: var(--danger); }
+        .stat-change.neu  { color: var(--muted); }
+
+        /* ===== SECTION ===== */
+        .section {
+            margin-bottom: 32px;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+        }
+
+        .section-title {
+            font-family: var(--mono);
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--muted);
+        }
+
+        /* ===== TABLE ===== */
+        .table-wrap {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        thead th {
+            padding: 12px 16px;
+            text-align: left;
+            font-family: var(--mono);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--muted);
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            font-weight: 400;
+        }
+
+        tbody tr {
+            border-bottom: 1px solid var(--border);
+            transition: background 0.15s;
+        }
+
+        tbody tr:last-child { border-bottom: none; }
+        tbody tr:hover { background: rgba(255,255,255,0.02); }
+
+        tbody td {
+            padding: 12px 16px;
+            color: var(--text);
+            vertical-align: middle;
+        }
+
+        .mono { font-family: var(--mono); font-size: 12px; }
+        .muted { color: var(--muted); }
+
+        /* ===== RISK BADGES ===== */
+        .badge {
+            display: inline-block;
+            font-family: var(--mono);
+            font-size: 10px;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .badge-high     { background: rgba(239,68,68,0.15);  color: #ef4444; }
+        .badge-medium   { background: rgba(245,158,11,0.15); color: #f59e0b; }
+        .badge-low      { background: rgba(0,212,170,0.12);  color: var(--accent); }
+
+        .badge-unreviewed  { background: rgba(100,116,139,0.2); color: var(--muted); }
+        .badge-reviewed    { background: rgba(0,212,170,0.12);  color: var(--accent); }
+        .badge-escalated   { background: rgba(168,85,247,0.15); color: #a855f7; }
+        .badge-dismissed   { background: rgba(30,41,59,0.5);    color: #334155; }
+
+        /* ===== ACTION BUTTONS ===== */
+        .actions {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .act-btn {
+            font-family: var(--mono);
+            font-size: 10px;
+            padding: 4px 10px;
+            border-radius: 4px;
+            border: 1px solid;
+            cursor: pointer;
+            text-decoration: none;
+            transition: 0.2s;
+            white-space: nowrap;
+        }
+
+        .act-reviewed  { border-color: var(--accent);   color: var(--accent);   }
+        .act-reviewed:hover  { background: var(--accent);   color: #000; }
+
+        .act-escalated { border-color: var(--escalate); color: var(--escalate); }
+        .act-escalated:hover { background: var(--escalate); color: #fff; }
+
+        .act-dismissed { border-color: var(--border);   color: var(--muted);    }
+        .act-dismissed:hover { background: var(--border); color: var(--text); }
+
+        /* ===== EMPTY STATE ===== */
+        .empty {
+            text-align: center;
+            padding: 40px;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        /* ===== FLASH ===== */
+        .flash {
+            padding: 10px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 13px;
+        }
+        .flash.success { background: rgba(0,212,170,0.1); border: 1px solid rgba(0,212,170,0.3); color: var(--accent); }
+        .flash.error   { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3);  color: var(--danger); }
+
+        @media (max-width: 768px) {
+            .topbar { padding: 0 16px; }
+            .page   { padding: 20px 16px; }
+            .page-header { flex-direction: column; align-items: flex-start; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ===== TOPBAR ===== -->
+<div class="topbar">
+    <div class="topbar-brand">⬡ SecureCryptoX</div>
+    <div class="topbar-right">
+        {% if unreviewed_count > 0 %}
+        <span class="badge-alert">{{ unreviewed_count }} unreviewed</span>
+        {% endif %}
+        <div class="topbar-user">Logged in as <span>{{ username }}</span></div>
+        <a href="/logout" class="btn-logout">Logout</a>
+    </div>
+</div>
+
+<!-- ===== PAGE ===== -->
+<div class="page">
+
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <!-- Page header + filters -->
+    <div class="page-header">
+        <div class="page-title">
+            Manager Dashboard
+            <small>Monitor and manage suspicious activity</small>
+        </div>
+
+        
+    </div>
+
+    <!-- ===== STAT CARDS ===== -->
+    <div class="stats-grid">
+
+        
+
+        <div class="stat-card warn">
+            <div class="stat-label">Today's Volume</div>
+            <div class="stat-value">RM {{ "{:,.0f}".format(today_volume) }}</div>
+            {% if volume_change is not none %}
+                {% if volume_change > 0 %}
+                    <div class="stat-change up">▲ {{ volume_change }}% vs yesterday</div>
+                {% elif volume_change < 0 %}
+                    <div class="stat-change down">▼ {{ volume_change|abs }}% vs yesterday</div>
+                {% else %}
+                    <div class="stat-change neu">— No change</div>
+                {% endif %}
+            {% else %}
+                <div class="stat-sub">{{ today_count }} transactions today</div>
+            {% endif %}
+        </div>
+
+        <div class="stat-card danger">
+            <div class="stat-label">Unreviewed Alerts</div>
+            <div class="stat-value">{{ unreviewed_count }}</div>
+            <div class="stat-sub">Suspicious activities pending</div>
+        </div>
+
+    </div>
+
+    <!-- ===== SUSPICIOUS ACTIVITIES ===== -->
+    <div class="section">
+        <div class="section-header">
+            <div class="section-title">Suspicious Activities</div>
+        </div>
+
+        <div class="table-wrap">
+            {% if suspicious %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>User</th>
+                        <th>Activity Type</th>
+                        <th>Risk Level</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in suspicious %}
+                    <tr>
+                        <td class="mono muted">{{ s.activity_id }}</td>
+                        <td>{{ s.username }}</td>
+                        <td>{{ s.activity_type }}</td>
+                        <td>
+                            <span class="badge badge-{{ s.risk_level | lower }}">
+                                {{ s.risk_level }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge badge-{{ s.status | lower }}">
+                                {{ s.status }}
+                            </span>
+                        </td>
+                        <td class="mono muted">{{ s.created_at.strftime('%d %b %Y %H:%M') if s.created_at else '—' }}</td>
+                        <td>
+                            <div class="actions">
+                                {% if s.status != 'reviewed' %}
+                                <a href="/review_activity/{{ s.activity_id }}/reviewed"
+                                   class="act-btn act-reviewed">✓ Review</a>
+                                {% endif %}
+                                {% if s.status != 'escalated' %}
+                                <a href="/review_activity/{{ s.activity_id }}/escalated"
+                                   class="act-btn act-escalated">↑ Escalate</a>
+                                {% endif %}
+                                {% if s.status != 'dismissed' %}
+                                <a href="/review_activity/{{ s.activity_id }}/dismissed"
+                                   class="act-btn act-dismissed">✕ Dismiss</a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty">No suspicious activities found.</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- ===== RECENT TRANSACTIONS ===== -->
+   
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,15 @@
+ALTER TABLE Wallets
+ADD encrypted_balance VARBINARY(MAX);
+GO
+
+OPEN SYMMETRIC KEY CryptoSymmetricKey
+DECRYPTION BY CERTIFICATE CryptoCertificate;
+GO
+
+UPDATE Wallets
+SET encrypted_balance =
+EncryptByKey(
+    Key_GUID('CryptoSymmetricKey'),
+    CAST(balance_rm AS VARCHAR(50))
+);
+GO

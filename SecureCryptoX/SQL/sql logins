@@ -1,0 +1,117 @@
+-- =========================================
+-- CREATE SQL LOGINS
+-- =========================================
+
+CREATE LOGIN crypto_admin
+WITH PASSWORD = 'Admin123!';
+
+CREATE LOGIN crypto_manager
+WITH PASSWORD = 'Manager123!';
+
+CREATE LOGIN crypto_user
+WITH PASSWORD = 'User123!';
+
+
+-- =========================================
+-- USE DATABASE
+-- =========================================
+
+USE SecureCryptoX;
+
+
+-- =========================================
+-- CREATE DATABASE USERS
+-- =========================================
+
+CREATE USER crypto_admin
+FOR LOGIN crypto_admin;
+
+CREATE USER crypto_manager
+FOR LOGIN crypto_manager;
+
+CREATE USER crypto_user
+FOR LOGIN crypto_user;
+
+
+-- =========================================
+-- CREATE ROLES
+-- =========================================
+
+CREATE ROLE app_admin;
+
+CREATE ROLE app_manager;
+
+CREATE ROLE app_user;
+
+
+-- =========================================
+-- ASSIGN USERS TO ROLES
+-- =========================================
+
+ALTER ROLE app_admin
+ADD MEMBER crypto_admin;
+
+ALTER ROLE app_manager
+ADD MEMBER crypto_manager;
+
+ALTER ROLE app_user
+ADD MEMBER crypto_user;
+
+
+-- =========================================
+-- ADMIN PERMISSIONS
+-- =========================================
+
+GRANT SELECT, INSERT, UPDATE, DELETE
+ON dbo.Users
+TO app_admin;
+
+GRANT SELECT, INSERT, UPDATE, DELETE
+ON dbo.Wallets
+TO app_admin;
+
+GRANT SELECT, INSERT, UPDATE, DELETE
+ON dbo.Transactions
+TO app_admin;
+
+GRANT SELECT, INSERT, UPDATE, DELETE
+ON dbo.AuditLog
+TO app_admin;
+
+GRANT SELECT, INSERT, UPDATE, DELETE
+ON dbo.SuspiciousActivities
+TO app_admin;
+
+
+-- =========================================
+-- MANAGER PERMISSIONS
+-- =========================================
+
+GRANT SELECT
+ON dbo.Users
+TO app_manager;
+
+GRANT SELECT
+ON dbo.Transactions
+TO app_manager;
+
+GRANT SELECT
+ON dbo.AuditLog
+TO app_manager;
+
+GRANT SELECT
+ON dbo.SuspiciousActivities
+TO app_manager;
+
+
+-- =========================================
+-- USER PERMISSIONS
+-- =========================================
+
+GRANT SELECT
+ON dbo.Wallets
+TO app_user;
+
+GRANT SELECT, INSERT
+ON dbo.Transactions
+TO app_user;

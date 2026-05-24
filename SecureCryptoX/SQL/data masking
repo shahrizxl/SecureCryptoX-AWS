@@ -1,0 +1,4 @@
+ALTER TABLE Users
+ALTER COLUMN email
+ADD MASKED WITH (FUNCTION = 'email()');
+GO

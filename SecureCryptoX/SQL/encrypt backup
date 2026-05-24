@@ -1,0 +1,10 @@
+BACKUP DATABASE SecureCryptoX
+TO DISK = 'C:\Backup\SecureCryptoX.bak'
+WITH
+COMPRESSION,
+ENCRYPTION
+(
+    ALGORITHM = AES_256,
+    SERVER CERTIFICATE = BackupEncryptionCert
+);
+GO

@@ -1,0 +1,13 @@
+USE master;
+GO
+
+CREATE SERVER AUDIT CryptoAudit
+TO FILE
+(
+    FILEPATH = 'C:\AuditLogs\'
+);
+GO
+
+ALTER SERVER AUDIT CryptoAudit
+WITH (STATE = ON);
+GO

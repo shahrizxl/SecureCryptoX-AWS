@@ -1,0 +1,3 @@
+CREATE CERTIFICATE CryptoCertificate
+WITH SUBJECT = 'Crypto Security';
+GO

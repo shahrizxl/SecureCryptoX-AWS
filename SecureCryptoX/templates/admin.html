@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureCryptoX Admin Panel</title>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg:       #080c14;
+            --surface:  #0e1420;
+            --card:     #121a28;
+            --border:   #1c2a3e;
+            --accent:   #ef4444;
+            --blue:     #3b82f6;
+            --green:    #22c55e;
+            --warn:     #f59e0b;
+            --purple:   #a855f7;
+            --text:     #e2e8f0;
+            --muted:    #64748b;
+            --mono:     'IBM Plex Mono', monospace;
+            --sans:     'DM Sans', sans-serif;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: var(--sans);
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            background-image:
+                radial-gradient(ellipse 700px 400px at 0% 0%, rgba(239,68,68,0.04) 0%, transparent 60%),
+                radial-gradient(ellipse 500px 500px at 100% 100%, rgba(59,130,246,0.04) 0%, transparent 60%);
+        }
+
+        /* ===== TOPBAR ===== */
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 32px;
+            height: 60px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .topbar-brand {
+            font-family: var(--mono);
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--accent);
+            letter-spacing: 0.05em;
+        }
+
+        .topbar-right { display: flex; align-items: center; gap: 16px; }
+
+        .escalated-badge {
+            background: var(--accent);
+            color: white;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 99px;
+            font-family: var(--mono);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50%       { opacity: 0.6; }
+        }
+
+        .topbar-user { font-size: 13px; color: var(--muted); }
+        .topbar-user span { color: var(--text); font-weight: 500; }
+
+        .btn-logout {
+            font-size: 12px;
+            padding: 6px 14px;
+            border: 1px solid rgba(239,68,68,0.3);
+            border-radius: 6px;
+            background: rgba(239,68,68,0.08);
+            color: var(--accent);
+            cursor: pointer;
+            text-decoration: none;
+            transition: 0.2s;
+            font-family: var(--sans);
+        }
+        .btn-logout:hover { background: var(--accent); color: white; }
+
+        /* ===== PAGE ===== */
+        .page { max-width: 1400px; margin: 0 auto; padding: 32px 24px; }
+
+        .page-title {
+            font-family: var(--mono);
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .page-sub { font-size: 13px; color: var(--muted); margin-bottom: 28px; }
+
+        /* ===== STAT CARDS ===== */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px 22px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 2px;
+        }
+
+        .stat-card.red::before    { background: linear-gradient(90deg, var(--accent), transparent); }
+        .stat-card.green::before  { background: linear-gradient(90deg, var(--green), transparent); }
+        .stat-card.blue::before   { background: linear-gradient(90deg, var(--blue), transparent); }
+        .stat-card.warn::before   { background: linear-gradient(90deg, var(--warn), transparent); }
+
+        .stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 10px; }
+        .stat-value { font-family: var(--mono); font-size: 28px; font-weight: 600; }
+        .stat-value.red    { color: var(--accent); }
+        .stat-value.green  { color: var(--green); }
+        .stat-value.warn   { color: var(--warn); }
+
+        /* ===== SECTION ===== */
+        .section { margin-bottom: 32px; }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .section-title {
+            font-family: var(--mono);
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--muted);
+        }
+
+        /* ===== FILTER ===== */
+        .filter-select {
+            background: var(--card);
+            color: var(--text);
+            border: 1px solid var(--border);
+            padding: 7px 12px;
+            border-radius: 7px;
+            font-family: var(--mono);
+            font-size: 12px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        /* ===== TABLE ===== */
+        .table-wrap {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+
+        thead th {
+            padding: 12px 16px;
+            text-align: left;
+            font-family: var(--mono);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--muted);
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            font-weight: 400;
+        }
+
+        tbody tr { border-bottom: 1px solid var(--border); transition: background 0.15s; }
+        tbody tr:last-child { border-bottom: none; }
+        tbody tr:hover { background: rgba(255,255,255,0.02); }
+
+        /* Escalated row highlight */
+        tbody tr.escalated-row {
+            border-left: 3px solid var(--accent);
+            background: rgba(239,68,68,0.04);
+        }
+
+        tbody tr.escalated-row:hover { background: rgba(239,68,68,0.07); }
+
+        tbody td { padding: 12px 16px; color: var(--text); vertical-align: middle; }
+
+        .mono  { font-family: var(--mono); font-size: 12px; }
+        .muted { color: var(--muted); }
+
+        /* ===== BADGES ===== */
+        .badge {
+            display: inline-block;
+            font-family: var(--mono);
+            font-size: 10px;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .badge-high       { background: rgba(239,68,68,0.15);  color: var(--accent); }
+        .badge-medium     { background: rgba(245,158,11,0.15); color: var(--warn); }
+        .badge-low        { background: rgba(34,197,94,0.12);  color: var(--green); }
+
+        .badge-escalated  { background: rgba(239,68,68,0.2);   color: var(--accent); border: 1px solid rgba(239,68,68,0.4); }
+        .badge-unreviewed { background: rgba(100,116,139,0.2); color: var(--muted); }
+        .badge-reviewed   { background: rgba(34,197,94,0.12);  color: var(--green); }
+        .badge-dismissed  { background: rgba(30,41,59,0.5);    color: #334155; }
+        .badge-resolved   { background: rgba(59,130,246,0.15); color: var(--blue); }
+
+        .badge-active   { background: rgba(34,197,94,0.12);  color: var(--green); }
+        .badge-disabled { background: rgba(239,68,68,0.12);  color: var(--accent); }
+
+        .badge-user    { background: rgba(100,116,139,0.2); color: var(--muted); }
+        .badge-manager { background: rgba(59,130,246,0.15); color: var(--blue); }
+        .badge-admin   { background: rgba(239,68,68,0.15);  color: var(--accent); }
+
+        /* ===== ACTION BUTTONS ===== */
+        .actions { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+
+        .act-btn {
+            font-family: var(--mono);
+            font-size: 10px;
+            padding: 4px 10px;
+            border-radius: 4px;
+            border: 1px solid;
+            cursor: pointer;
+            text-decoration: none;
+            transition: 0.2s;
+            white-space: nowrap;
+            background: none;
+        }
+
+        .act-enable   { border-color: var(--green);  color: var(--green); }
+        .act-enable:hover  { background: var(--green);  color: #000; }
+
+        .act-disable  { border-color: var(--accent); color: var(--accent); }
+        .act-disable:hover { background: var(--accent); color: #fff; }
+
+        .act-resolve  { border-color: var(--blue);   color: var(--blue); }
+        .act-resolve:hover  { background: var(--blue);   color: #fff; }
+
+        .protected { font-size: 11px; color: var(--warn); font-family: var(--mono); }
+
+        /* ===== ROLE FORM ===== */
+        .role-form { display: flex; align-items: center; gap: 6px; }
+
+        .role-select {
+            background: var(--surface);
+            color: var(--text);
+            border: 1px solid var(--border);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-family: var(--mono);
+            font-size: 11px;
+            outline: none;
+        }
+
+        .role-save {
+            font-family: var(--mono);
+            font-size: 10px;
+            padding: 4px 10px;
+            border-radius: 4px;
+            border: 1px solid var(--blue);
+            color: var(--blue);
+            background: none;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .role-save:hover { background: var(--blue); color: #fff; }
+
+        /* ===== EMPTY ===== */
+        .empty { text-align: center; padding: 40px; color: var(--muted); font-size: 13px; }
+
+        @media (max-width: 768px) {
+            .topbar { padding: 0 16px; }
+            .page   { padding: 20px 16px; }
+            table   { display: block; overflow-x: auto; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ===== TOPBAR ===== -->
+<div class="topbar">
+    <div class="topbar-brand">⬡ SecureCryptoX — Admin</div>
+    <div class="topbar-right">
+        {% if escalated_count > 0 %}
+        <span class="escalated-badge">{{ escalated_count }} escalated</span>
+        {% endif %}
+        <a href="/logout" class="btn-logout">Logout</a>
+    </div>
+</div>
+
+<div class="page">
+
+    <div class="page-title">Admin Security Dashboard</div>
+    <div class="page-sub">Manage users, roles, audit logs and escalated suspicious activities.</div>
+
+    <!-- ===== STAT CARDS ===== -->
+    <div class="stats-grid">
+
+        <div class="stat-card green">
+            <div class="stat-label">Total Users</div>
+            <div class="stat-value">{{ total_users }}</div>
+        </div>
+
+        <div class="stat-card blue">
+            <div class="stat-label">Total Transactions</div>
+            <div class="stat-value">{{ total_transactions }}</div>
+        </div>
+
+        <div class="stat-card warn">
+            <div class="stat-label">Suspicious Activities</div>
+            <div class="stat-value warn">{{ suspicious_count }}</div>
+        </div>
+
+        <div class="stat-card red">
+            <div class="stat-label">Escalated — Needs Action</div>
+            <div class="stat-value red">{{ escalated_count }}</div>
+        </div>
+
+    </div>
+
+    <!-- ===== USERS ===== -->
+    <div class="section">
+        <div class="section-header">
+            <div class="section-title">Registered Users</div>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr>
+                        <td class="mono muted">{{ user.user_id }}</td>
+                        <td>{{ user.username }}</td>
+                        <td class="muted">{{ user.email }}</td>
+                        <td>
+                            <span class="badge badge-{{ user.role }}">{{ user.role }}</span>
+                        </td>
+                        <td>
+                            {% if user.is_active %}
+                                <span class="badge badge-active">Active</span>
+                            {% else %}
+                                <span class="badge badge-disabled">Disabled</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="actions">
+                                {% if user.role != 'admin' %}
+
+                                    {% if user.is_active %}
+                                        <a href="/disable_user/{{ user.user_id }}" class="act-btn act-disable">Disable</a>
+                                    {% else %}
+                                        <a href="/enable_user/{{ user.user_id }}" class="act-btn act-enable">Enable</a>
+                                    {% endif %}
+
+                                    <form action="/update_role" method="POST" class="role-form">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <input type="hidden" name="user_id" value="{{ user.user_id }}">
+                                        <select name="role" class="role-select">
+                                            <option value="user"    {% if user.role == 'user'    %}selected{% endif %}>User</option>
+                                            <option value="manager" {% if user.role == 'manager' %}selected{% endif %}>Manager</option>
+                                        </select>
+                                        <button type="submit" class="role-save">Save</button>
+                                    </form>
+
+                                {% else %}
+                                    <span class="protected">⚿ Protected Admin</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+
+    <!-- ===== TRANSACTIONS ===== -->
+<div class="section">
+    <div class="section-header">
+        <div class="section-title">Transaction Monitoring</div>
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+
+            <form method="GET" style="display:flex; gap:8px; align-items:center;">
+                <select name="user_id" onchange="this.form.submit()" class="filter-select">
+                    <option value="">All Users</option>
+                    {% for user in users %}
+                    <option value="{{ user.user_id }}"
+                        {% if selected_user == user.user_id|string %}selected{% endif %}>
+                        {{ user.username }}
+                    </option>
+                    {% endfor %}
+                </select>
+
+                <select name="date_range" onchange="this.form.submit()" class="filter-select">
+                    <option value="all"   {% if date_range == 'all'   %}selected{% endif %}>All Time</option>
+                    <option value="today" {% if date_range == 'today' %}selected{% endif %}>Today</option>
+                    <option value="week"  {% if date_range == 'week'  %}selected{% endif %}>7 Days</option>
+                    <option value="month" {% if date_range == 'month' %}selected{% endif %}>30 Days</option>
+                </select>
+            </form>
+
+            <a href="/export_transactions?date_range={{ date_range }}&user_id={{ selected_user or '' }}"
+               class="act-btn act-resolve" style="padding:6px 12px;">↓ Export CSV</a>
+
+        </div>
+    </div>
+
+    <div class="table-wrap">
+        {% if transactions %}
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>User</th>
+                    <th>Type</th>
+                    <th>Amount (RM)</th>
+                    <th>Amount (BTC)</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in transactions %}
+                <tr>
+                    <td class="mono muted">{{ t.transaction_id }}</td>
+                    <td>{{ t.username }}</td>
+                    <td>
+                        <span class="badge
+                            {% if t.transaction_type == 'deposit' %}badge-active
+                            {% elif t.transaction_type == 'withdraw' %}badge-disabled
+                            {% elif t.transaction_type == 'buy' %}badge-resolved
+                            {% elif t.transaction_type == 'sell' %}badge-medium
+                            {% else %}badge-unreviewed{% endif %}">
+                            {{ t.transaction_type }}
+                        </span>
+                    </td>
+                    <td class="mono">{% if t.amount_rm %}RM {{ "{:,.2f}".format(t.amount_rm) }}{% else %}—{% endif %}</td>
+                    <td class="mono">{% if t.amount_btc %}{{ "{:.8f}".format(t.amount_btc) }}{% else %}—{% endif %}</td>
+                    <td class="mono muted">{{ t.created_at }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty">No transactions found.</div>
+        {% endif %}
+    </div>
+</div>
+
+    <!-- ===== SUSPICIOUS ACTIVITIES ===== -->
+    <div class="section">
+        <div class="section-header">
+            <div class="section-title">Suspicious Activities</div>
+            <span style="font-size:12px; color:var(--muted);">Escalated items are pinned to the top</span>
+        </div>
+        <div class="table-wrap">
+            {% if suspicious %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>User</th>
+                        <th>Activity</th>
+                        <th>Risk</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in suspicious %}
+                    <tr class="{% if s.status == 'escalated' %}escalated-row{% endif %}">
+                        <td class="mono muted">{{ s.activity_id }}</td>
+                        <td>{{ s.username }}</td>
+                        <td>{{ s.activity_type }}</td>
+                        <td>
+                            <span class="badge badge-{{ s.risk_level | lower }}">{{ s.risk_level }}</span>
+                        </td>
+                        <td>
+                            <span class="badge badge-{{ s.status | lower }}">{{ s.status }}</span>
+                        </td>
+                        <td class="mono muted">{{ s.created_at.strftime('%d %b %Y %H:%M') if s.created_at else '—' }}</td>
+                        <td>
+                            {% if s.status == 'escalated' %}
+                                <a href="/resolve_activity/{{ s.activity_id }}" class="act-btn act-resolve">✓ Resolve</a>
+                            {% else %}
+                                <span class="muted" style="font-size:11px;">—</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty">No suspicious activities recorded.</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- ===== AUDIT LOGS ===== -->
+    <div class="section">
+        <div class="section-header">
+            <div class="section-title">Audit Logs</div>
+            <form method="GET">
+    <input type="hidden" name="date_range" value="{{ date_range }}">
+    <select name="user_id" onchange="this.form.submit()" class="filter-select">
+                    <option value="">All Users</option>
+                    {% for user in users %}
+                    <option value="{{ user.user_id }}"
+                        {% if selected_user == user.user_id|string %}selected{% endif %}>
+                        {{ user.username }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </form>
+        </div>
+        <div class="table-wrap">
+            {% if logs %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>User</th>
+                        <th>Action</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr>
+                        <td class="mono muted">{{ log.audit_id }}</td>
+                        <td>{{ log.username }}</td>
+                        <td>{{ log.action }}</td>
+                        <td class="mono muted">{{ log.created_at }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty">No audit logs found.</div>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>

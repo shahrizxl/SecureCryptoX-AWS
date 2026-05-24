@@ -1,0 +1,1148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>SecureCryptoX Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-base: #020617;
+            --bg-surface: rgba(15, 23, 42, 0.6);
+            --bg-surface-hover: rgba(30, 41, 59, 0.8);
+            --border-light: rgba(255, 255, 255, 0.08);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            
+            --accent-blue: #3b82f6;
+            --accent-blue-hover: #2563eb;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --accent-orange: #f59e0b;
+            --accent-purple: #8b5cf6;
+            
+            --radius-lg: 20px;
+            --radius-md: 12px;
+            --radius-sm: 8px;
+            
+            --shadow-glow: 0 0 20px rgba(59, 130, 246, 0.15);
+            --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-base);
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(59, 130, 246, 0.08), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.08), transparent 25%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-fade-up { animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        .delay-3 { animation-delay: 0.3s; }
+
+        /* Navbar */
+        .navbar {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 5%;
+            background: rgba(2, 6, 23, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-light);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo { font-size: 24px; font-weight: 700; letter-spacing: -0.5px; display: flex; align-items: center; gap: 8px; }
+        .logo span { color: var(--accent-blue); text-shadow: 0 0 15px rgba(59, 130, 246, 0.4); }
+
+        .logout-btn {
+            padding: 10px 20px;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: var(--radius-md);
+            text-decoration: none;
+            color: var(--accent-red);
+            font-weight: 500;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover { background: var(--accent-red); color: white; box-shadow: 0 0 15px rgba(239, 68, 68, 0.3); transform: translateY(-1px); }
+
+        .container { width: 90%; max-width: 1400px; margin: auto; padding: 40px 0 80px 0; }
+
+        .welcome { margin-bottom: 40px; }
+        .welcome h1 { font-size: 36px; font-weight: 700; letter-spacing: -1px; margin-bottom: 8px; }
+        .welcome p { color: var(--text-secondary); font-size: 16px; }
+
+        /* Cards */
+        .card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-lg);
+            padding: 28px;
+            backdrop-filter: blur(10px);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: var(--shadow-card);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .card:hover { transform: translateY(-4px); background: var(--bg-surface-hover); border-color: rgba(255,255,255,0.15); box-shadow: var(--shadow-glow); }
+        .card:hover::before { opacity: 1; }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 40px; }
+
+        .card-title {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-value { font-size: 32px; font-weight: 700; letter-spacing: -0.5px; margin-top: auto; }
+
+        .btc { color: var(--accent-orange); }
+        .profit { color: var(--accent-green); }
+        .loss { color: var(--accent-red); }
+
+        /* =========================================
+           BALANCE CARD WITH EYE BUTTON
+        ========================================= */
+
+        
+        .eye-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-secondary);
+            padding: 4px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.2s, background 0.2s;
+            margin-top: 0;
+            width: auto;
+            box-shadow: none;
+            transform: none;
+            font-size: 14px;
+        }
+
+        .eye-btn:hover {
+            color: var(--accent-blue);
+            background: rgba(59,130,246,0.1);
+            transform: none;
+            box-shadow: none;
+            filter: none;
+        }
+
+        .eye-btn svg { width: 16px; height: 16px; }
+
+        .balance-value {
+            font-size: 32px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            margin-top: auto;
+            transition: filter 0.3s ease;
+        }
+
+        .balance-value.hidden {
+    filter: blur(12px);
+    opacity: 0.35;
+    user-select: none;
+    transition: all 0.3s ease;
+}
+
+.balance-value {
+    transition: all 0.3s ease;
+}
+
+        /* =========================================
+           PASSWORD MODAL
+        ========================================= */
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(2, 6, 23, 0.85);
+            backdrop-filter: blur(6px);
+            z-index: 999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal {
+            background: #0f172a;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            padding: 36px;
+            width: 100%;
+            max-width: 380px;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.6);
+            transform: translateY(16px) scale(0.97);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+        }
+
+        .modal-overlay.active .modal {
+            transform: translateY(0) scale(1);
+        }
+
+        .modal-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            background: rgba(59,130,246,0.12);
+            border: 1px solid rgba(59,130,246,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-icon svg { width: 24px; height: 24px; color: var(--accent-blue); }
+
+        .modal h3 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 6px;
+            letter-spacing: -0.3px;
+        }
+
+        .modal p {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+            line-height: 1.6;
+        }
+
+        .modal-input-wrap {
+            position: relative;
+            margin-bottom: 16px;
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 13px 44px 13px 16px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-light);
+            background: rgba(0,0,0,0.3);
+            color: var(--text-primary);
+            font-size: 15px;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s ease;
+            margin-bottom: 0;
+        }
+
+        .modal-input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+        }
+
+        .modal-toggle-pw {
+            position: absolute;
+            right: 13px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-secondary);
+            padding: 0;
+            margin: 0;
+            width: auto;
+            box-shadow: none;
+            display: flex;
+            align-items: center;
+        }
+
+        .modal-toggle-pw:hover { color: var(--text-primary); transform: translateY(-50%); box-shadow: none; filter: none; }
+        .modal-toggle-pw svg { width: 16px; height: 16px; }
+
+        .modal-error {
+            font-size: 13px;
+            color: var(--accent-red);
+            margin-bottom: 14px;
+            display: none;
+            background: rgba(239,68,68,0.1);
+            border: 1px solid rgba(239,68,68,0.2);
+            padding: 8px 12px;
+            border-radius: 8px;
+        }
+
+        .modal-error.show { display: block; }
+
+        .modal-actions { display: flex; gap: 10px; }
+
+        .modal-cancel {
+            flex: 1;
+            padding: 13px;
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-md);
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: none;
+        }
+
+        .modal-cancel:hover { background: rgba(255,255,255,0.05); color: var(--text-primary); transform: none; box-shadow: none; filter: none; }
+
+        .modal-confirm {
+            flex: 2;
+            padding: 13px;
+            border: none;
+            border-radius: var(--radius-md);
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-blue-hover));
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 15px rgba(59,130,246,0.2);
+        }
+
+        .modal-confirm:hover { filter: brightness(1.1); transform: translateY(-1px); }
+
+        .modal-close {
+            position: absolute;
+            top: 16px; right: 16px;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 6px;
+            display: flex;
+            width: auto;
+            box-shadow: none;
+            margin: 0;
+        }
+
+        .modal-close:hover { color: var(--text-primary); background: rgba(255,255,255,0.05); transform: none; box-shadow: none; filter: none; }
+        .modal-close svg { width: 16px; height: 16px; }
+
+        /* Wallet Grid */
+        .wallet-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 24px;
+            margin-bottom: 40px;
+            align-items: stretch;
+        }
+
+        .wallet-grid .card:nth-child(1),
+        .wallet-grid .card:nth-child(2) { grid-column: span 3; }
+
+        .wallet-grid .card:nth-child(3),
+        .wallet-grid .card:nth-child(4),
+        .wallet-grid .card:nth-child(5) { grid-column: span 2; }
+
+        .wallet-grid h3 { font-size: 18px; font-weight: 600; margin-bottom: 24px; padding-bottom: 12px; border-bottom: 1px solid var(--border-light); }
+
+        form { display: flex; flex-direction: column; gap: 16px; height: 100%; flex: 1; }
+
+        .input-wrapper { display: flex; flex-direction: column; gap: 16px; flex-grow: 1; }
+
+        input {
+            width: 100%;
+            padding: 14px 16px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-light);
+            background: rgba(0,0,0,0.2);
+            color: var(--text-primary);
+            font-size: 15px;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s ease;
+        }
+
+        input::placeholder { color: rgba(148, 163, 184, 0.6); }
+        input:focus { outline: none; border-color: var(--accent-blue); background: rgba(0,0,0,0.4); box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { appearance: textfield; -moz-appearance: textfield; }
+
+        button {
+            margin-top: auto;
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: var(--radius-md);
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-blue-hover));
+            color: white;
+            font-size: 15px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(59,130,246,0.2);
+        }
+
+        button:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(59,130,246,0.4); filter: brightness(1.1); }
+
+        form[action="/withdraw"] button { background: linear-gradient(135deg, #64748b, #475569); }
+        form[action="/sell_btc"] button { background: linear-gradient(135deg, var(--accent-orange), #d97706); }
+        form[action="/transfer_btc"] button { background: linear-gradient(135deg, var(--accent-purple), #7c3aed); }
+
+        /* Table */
+        .table-card { padding: 32px; }
+        .table-card h2 { font-size: 20px; margin-bottom: 24px; font-weight: 600; }
+        .table-container { overflow-x: auto; }
+
+        table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 800px; }
+        table th { text-align: left; padding: 16px; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-secondary); border-bottom: 1px solid var(--border-light); font-weight: 600; }
+        table td { padding: 20px 16px; font-size: 15px; border-bottom: 1px solid rgba(255,255,255,0.03); vertical-align: middle; }
+        table tr:last-child td { border-bottom: none; }
+        table tr:hover td { background: rgba(255,255,255,0.02); }
+
+        .badge { display: inline-flex; align-items: center; justify-content: center; padding: 6px 12px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 600; text-transform: capitalize; letter-spacing: 0.5px; }
+
+        .deposit  { background: rgba(16,185,129,0.15);  color: var(--accent-green);  border: 1px solid rgba(16,185,129,0.2); }
+        .withdraw { background: rgba(239,68,68,0.15);   color: var(--accent-red);    border: 1px solid rgba(239,68,68,0.2); }
+        .buy      { background: rgba(59,130,246,0.15);  color: var(--accent-blue);   border: 1px solid rgba(59,130,246,0.2); }
+        .sell     { background: rgba(245,158,11,0.15);  color: var(--accent-orange); border: 1px solid rgba(245,158,11,0.2); }
+        .transfer { background: rgba(139,92,246,0.15);  color: var(--accent-purple); border: 1px solid rgba(139,92,246,0.2); }
+
+        @media(max-width: 1024px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .wallet-grid .card:nth-child(n) { grid-column: span 3; }
+            .wallet-grid .card:nth-child(5) { grid-column: span 6; }
+        }
+
+        @media(max-width: 768px) {
+            .stats-grid { grid-template-columns: repeat(1, 1fr); }
+            .wallet-grid .card:nth-child(n) { grid-column: span 6; }
+            .navbar { padding: 16px 20px; }
+            .container { padding: 30px 0 60px 0; }
+            .welcome h1 { font-size: 28px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- =========================================
+     PASSWORD MODAL
+========================================= -->
+<div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+
+        <button class="modal-close" id="modalClose">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+
+        <div class="modal-icon">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+        </div>
+
+        <h3>Confirm your password</h3>
+        <p>Enter your account password to reveal your balance.</p>
+
+        <div class="modal-input-wrap">
+            <input
+                class="modal-input"
+                type="password"
+                id="modalPassword"
+                placeholder="Enter password"
+                autocomplete="current-password"
+            >
+            <button class="modal-toggle-pw" id="modalTogglePw" type="button">
+                <svg id="eyeIconShow" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                <svg id="eyeIconHide" style="display:none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/></svg>
+            </button>
+        </div>
+
+        <div class="modal-error" id="modalError">Incorrect password. Please try again.</div>
+
+        <div class="modal-actions">
+            <button class="modal-cancel" id="modalCancel">Cancel</button>
+            <button class="modal-confirm" id="modalConfirm">Reveal Balance</button>
+        </div>
+
+    </div>
+</div>
+
+<!-- TRANSFER CONFIRM MODAL -->
+<div class="modal-overlay" id="transferModalOverlay">
+    <div class="modal">
+
+        <button class="modal-close" id="transferModalClose">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+
+        <div class="modal-icon" style="background:rgba(139,92,246,0.12); border-color:rgba(139,92,246,0.2);">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color:#8b5cf6;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+        </div>
+
+        <h3>Confirm Transfer</h3>
+        <p id="transferModalDesc" style="margin-bottom:16px;">Sending <strong id="transferSummaryBTC"></strong> to <strong id="transferSummaryUser" style="color:#10b981;"></strong></p>
+        <p style="margin-bottom:24px;">Enter your password to authorise this transfer.</p>
+
+        <div class="modal-input-wrap">
+            <input class="modal-input" type="password" id="transferPassword" placeholder="Enter password" autocomplete="current-password">
+            <button class="modal-toggle-pw" id="transferTogglePw" type="button">
+                <svg id="tEyeShow" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                <svg id="tEyeHide" style="display:none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/></svg>
+            </button>
+        </div>
+
+        <div class="modal-error" id="transferModalError">Incorrect password. Please try again.</div>
+
+        <div class="modal-actions">
+            <button class="modal-cancel" id="transferModalCancel">Cancel</button>
+            <button class="modal-confirm" id="transferModalConfirm" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed);">Confirm Transfer</button>
+        </div>
+
+    </div>
+</div>
+
+<nav class="navbar">
+    <div class="logo">Secure<span>CryptoX</span></div>
+    <a href="/logout"
+   class="logout-btn"
+   onclick="sessionStorage.removeItem('balanceUnlocked')">
+   Logout
+</a>
+</nav>
+
+<div class="container">
+
+    <div class="welcome animate-fade-up">
+    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
+
+        <div>
+            <h1>Welcome back, {{ username }}</h1>
+            <p>Monitor your crypto assets, portfolio performance, and trading activities securely.</p>
+        </div>
+
+        <button
+            class="eye-btn"
+            id="globalEyeBtn"
+            title="Reveal all balances"
+            style="
+                width:44px;
+                height:44px;
+                border-radius:12px;
+                background:rgba(59,130,246,0.1);
+                border:1px solid rgba(59,130,246,0.2);
+            "
+        >
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+            </svg>
+        </button>
+
+    </div>
+</div>
+
+<!-- STATS GRID -->
+{% set safe_wallet = wallet if wallet else {'balance_rm': 0, 'balance_btc': 0} %}
+{% set safe_portfolio = portfolio if portfolio else {'btc_value': 0, 'total_portfolio': 0, 'profit': 0} %}
+
+<div class="stats-grid animate-fade-up delay-1">
+
+    <div class="card">
+        <div class="card-title">Bitcoin Price</div>
+        <div class="card-value btc">
+            RM {{ "%.2f"|format(btc_price|default(0)) }}
+        </div>
+    </div>
+
+    <!-- RM Balance -->
+    <div class="card">
+        <div class="card-title">RM Balance</div>
+        <div class="balance-value hidden" id="balance-rm">
+            RM {{ "%.2f"|format(safe_wallet.balance_rm) }}
+        </div>
+    </div>
+
+    <!-- BTC Balance -->
+    <div class="card">
+        <div class="card-title">BTC Balance</div>
+        <div class="balance-value hidden" id="balance-btc">
+            {{ "%.8f"|format(safe_wallet.balance_btc) }} BTC
+        </div>
+    </div>
+
+    <!-- BTC Portfolio -->
+    <div class="card">
+        <div class="card-title">BTC Portfolio Value</div>
+        <div class="balance-value btc hidden" id="balance-btc-portfolio">
+            RM {{ "%.2f"|format(safe_portfolio.btc_value) }}
+        </div>
+    </div>
+
+    <!-- Total Portfolio -->
+    <div class="card">
+        <div class="card-title">Total Portfolio Value</div>
+        <div class="balance-value hidden" id="balance-total">
+            RM {{ "%.2f"|format(safe_portfolio.total_portfolio) }}
+        </div>
+    </div>
+
+    <!-- Unrealized P/L -->
+    <div class="card">
+        <div class="card-title">Unrealized P/L</div>
+
+        <div class="balance-value hidden" id="balance-pl">
+            {% if safe_portfolio.profit >= 0 %}
+                <span class="profit">
+                    + RM {{ "%.2f"|format(safe_portfolio.profit) }}
+                </span>
+            {% else %}
+                <span class="loss">
+                    - RM {{ "%.2f"|format(safe_portfolio.profit|abs) }}
+                </span>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+
+    <!-- WALLET GRID -->
+    <div class="wallet-grid animate-fade-up delay-2">
+        <div class="card">
+            <h3>Deposit Money</h3>
+            <form action="/deposit" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="input-wrapper">
+                    <input type="number" step="0.01" name="amount" placeholder="Enter deposit amount" required>
+                </div>
+                <button type="submit">Deposit Funds</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h3>Withdraw Money</h3>
+            <form action="/withdraw" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="input-wrapper">
+                    <input type="number" step="0.01" name="amount" placeholder="Enter withdrawal amount" required>
+                </div>
+                <button type="submit">Withdraw Funds</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h3>Buy Bitcoin</h3>
+            <form action="/buy_btc" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="input-wrapper">
+                    <input type="hidden" name="btc_price" value="{{ btc_price }}">
+                    <input type="number" step="0.00000001" name="btc_quantity" placeholder="Enter BTC quantity">
+                    <input type="number" step="0.01" name="amount_rm" placeholder="Or buy using RM amount">
+                </div>
+                <button type="submit">Buy BTC</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h3>Sell Bitcoin</h3>
+            <form action="/sell_btc" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="input-wrapper">
+                    <input type="hidden" name="btc_price" value="{{ btc_price }}">
+                    <input type="number" step="0.00000001" name="btc_quantity" placeholder="Sell BTC quantity">
+                    <input type="number" step="0.01" name="amount_rm" placeholder="Or enter RM target amount">
+                </div>
+                <button type="submit">Sell BTC</button>
+            </form>
+        </div>
+
+        <div class="card">
+    <h3>Transfer Bitcoin</h3>
+    <div class="input-wrapper">
+        <input type="hidden" id="transfer_btc_price" value="{{ btc_price }}">
+
+        <!-- Step 1: receiver username -->
+        <div style="position:relative;">
+            <input
+                type="text"
+                id="receiver_username"
+                placeholder="Receiver username"
+                autocomplete="off"
+            >
+            <!-- verified tick -->
+            <span id="receiver_tick" style="
+                display:none;
+                position:absolute;
+                right:14px; top:50%;
+                transform:translateY(-50%);
+                color:#10b981;
+                font-size:18px;
+            ">✓</span>
+        </div>
+        <div id="receiver_error" style="
+            display:none;
+            font-size:12px;
+            color:#ef4444;
+            margin-top:-8px;
+            padding: 6px 10px;
+            background:rgba(239,68,68,0.1);
+            border:1px solid rgba(239,68,68,0.2);
+            border-radius:8px;
+        "></div>
+        <div id="receiver_confirmed" style="
+            display:none;
+            font-size:12px;
+            color:#10b981;
+            margin-top:-8px;
+            padding:6px 10px;
+            background:rgba(16,185,129,0.1);
+            border:1px solid rgba(16,185,129,0.2);
+            border-radius:8px;
+        "></div>
+
+        <!-- Step 2: amount (shown after receiver verified) -->
+        <div id="transfer_amount_section" style="display:none; display:flex; flex-direction:column; gap:16px;">
+            <input type="number" step="0.00000001" id="transfer_btc" placeholder="BTC quantity">
+            <input type="number" step="0.01" id="transfer_rm" placeholder="RM amount">
+        </div>
+    </div>
+
+    <button type="button" id="transferBtn" style="
+        background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+        margin-top:16px;
+    ">
+        Transfer BTC
+    </button>
+</div>
+    </div>
+
+    <div class="card table-card animate-fade-up delay-3">
+        <h2>Transaction History</h2>
+        <div class="table-container">
+            <table>
+                <tr>
+                    <th>Type</th>
+                    <th>RM</th>
+                    <th>BTC</th>
+                    <th>Receiver</th>
+                    <th>Date</th>
+                </tr>
+                {% for transaction in transactions | default([]) %}
+                <tr>
+                    <td><span class="badge {{ transaction.transaction_type }}">{{ transaction.transaction_type }}</span></td>
+                    <td>{% if transaction.amount_rm %} RM {{ "%.2f"|format(transaction.amount_rm) }} {% else %} - {% endif %}</td>
+                    <td>{% if transaction.amount_btc %} {{ "%.8f"|format(transaction.amount_btc) }} BTC {% else %} - {% endif %}</td>
+                    <td>{% if transaction.receiver_id %} {{ transaction.receiver_id }} {% else %} - {% endif %}</td>
+                    <td style="color: var(--text-secondary); font-size: 13px;">{{ transaction.created_at }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    const btcPrice = Number("{{ btc_price }}");
+
+    // BTC/RM live conversion
+    const buyRM  = document.querySelector('input[name="amount_rm"]');
+    const buyBTC = document.querySelector('input[name="btc_quantity"]');
+    if (buyRM && buyBTC) {
+        buyRM.addEventListener("input",  () => { if (buyRM.value)  buyBTC.value = (parseFloat(buyRM.value)  / btcPrice).toFixed(8); });
+        buyBTC.addEventListener("input", () => { if (buyBTC.value) buyRM.value  = (parseFloat(buyBTC.value) * btcPrice).toFixed(2); });
+    }
+
+    const sellBTC = document.querySelector('form[action="/sell_btc"] input[name="btc_quantity"]');
+    const sellRM  = document.querySelector('form[action="/sell_btc"] input[name="amount_rm"]');
+    if (sellBTC && sellRM) {
+        sellBTC.addEventListener("input", () => { if (sellBTC.value) sellRM.value  = (parseFloat(sellBTC.value) * btcPrice).toFixed(2); });
+        sellRM.addEventListener("input",  () => { if (sellRM.value)  sellBTC.value = (parseFloat(sellRM.value)  / btcPrice).toFixed(8); });
+    }
+
+    const transferBTC = document.getElementById("transfer_btc");
+    const transferRM  = document.getElementById("transfer_rm");
+    if (transferBTC && transferRM) {
+        transferBTC.addEventListener("input", () => { if (transferBTC.value) transferRM.value  = (parseFloat(transferBTC.value) * btcPrice).toFixed(2); });
+        transferRM.addEventListener("input",  () => { if (transferRM.value)  transferBTC.value = (parseFloat(transferRM.value)  / btcPrice).toFixed(8); });
+    }
+
+    // =========================================
+    // BALANCE REVEAL — EYE BUTTON + MODAL
+    // =========================================
+
+    // =========================================
+// BALANCE REVEAL — SINGLE GLOBAL EYE BUTTON
+// =========================================
+
+// =========================================
+// BALANCE REVEAL — SINGLE GLOBAL EYE BUTTON
+// =========================================
+
+const overlay      = document.getElementById('modalOverlay');
+const modalPw      = document.getElementById('modalPassword');
+const modalError   = document.getElementById('modalError');
+const modalConfirm = document.getElementById('modalConfirm');
+const modalCancel  = document.getElementById('modalCancel');
+const modalClose   = document.getElementById('modalClose');
+const togglePwBtn  = document.getElementById('modalTogglePw');
+const eyeShow      = document.getElementById('eyeIconShow');
+const eyeHide      = document.getElementById('eyeIconHide');
+const globalEyeBtn = document.getElementById('globalEyeBtn');
+
+const allBalanceIds = [
+    'balance-rm',
+    'balance-btc',
+    'balance-btc-portfolio',
+    'balance-total',
+    'balance-pl'
+];
+
+const svgEyeOpen = `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>`;
+const svgEyeClosed = `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/></svg>`;
+
+let isUnlocked = false;
+
+// Restore unlock state for this login session
+if (sessionStorage.getItem('balanceUnlocked') === 'true') {
+    isUnlocked = true;
+}
+
+
+function openModal() {
+    modalPw.value = '';
+    modalError.classList.remove('show');
+    overlay.classList.add('active');
+    setTimeout(() => modalPw.focus(), 200);
+}
+
+function closeModal() {
+    overlay.classList.remove('active');
+    modalPw.value = '';
+    modalError.classList.remove('show');
+}
+
+function revealAll() {
+    allBalanceIds.forEach(id => {
+        document.getElementById(id).classList.remove('hidden');
+    });
+    globalEyeBtn.innerHTML = svgEyeClosed;
+    globalEyeBtn.title = 'Hide balances';
+    isUnlocked = true;
+    sessionStorage.setItem(
+    'balanceUnlocked',
+    'true'
+);
+
+}
+
+function hideAll() {
+    allBalanceIds.forEach(id => {
+        document.getElementById(id).classList.add('hidden');
+    });
+    globalEyeBtn.innerHTML = svgEyeOpen;
+    globalEyeBtn.title = 'Reveal balances';
+    isUnlocked = false;
+    sessionStorage.removeItem(
+    'balanceUnlocked'
+);
+
+}
+
+globalEyeBtn.addEventListener('click', () => {
+    if (isUnlocked) {
+        hideAll();
+    } else {
+        openModal();
+    }
+});
+
+togglePwBtn.addEventListener('click', () => {
+    if (modalPw.type === 'password') {
+        modalPw.type = 'text';
+        eyeShow.style.display = 'none';
+        eyeHide.style.display = '';
+    } else {
+        modalPw.type = 'password';
+        eyeShow.style.display = '';
+        eyeHide.style.display = 'none';
+    }
+});
+
+modalConfirm.addEventListener('click', verifyPassword);
+modalPw.addEventListener('keydown', e => { if (e.key === 'Enter') verifyPassword(); });
+
+async function verifyPassword() {
+    const pw = modalPw.value;
+    if (!pw) return;
+
+    modalConfirm.textContent = 'Checking...';
+    modalConfirm.disabled = true;
+
+    try {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+        const res  = await fetch('/verify_password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+            body: JSON.stringify({ password: pw })
+        });
+
+        const data = await res.json();
+
+        if (data.valid) {
+            revealAll();
+            closeModal();
+        } else {
+            modalError.classList.add('show');
+            modalPw.value = '';
+            modalPw.focus();
+        }
+    } catch (err) {
+        modalError.textContent = 'Something went wrong. Try again.';
+        modalError.classList.add('show');
+    }
+
+    modalConfirm.textContent = 'Reveal Balance';
+    modalConfirm.disabled = false;
+}
+
+modalCancel.addEventListener('click', closeModal);
+modalClose.addEventListener('click', closeModal);
+overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+if (isUnlocked) {
+    revealAll();
+}
+
+
+// =========================================
+// TRANSFER — RECEIVER LOOKUP + CONFIRM MODAL
+// =========================================
+
+const receiverInput     = document.getElementById('receiver_username');
+const receiverError     = document.getElementById('receiver_error');
+const receiverConfirmed = document.getElementById('receiver_confirmed');
+const receiverTick      = document.getElementById('receiver_tick');
+const amountSection     = document.getElementById('transfer_amount_section');
+const transferBtn       = document.getElementById('transferBtn');
+const transferOverlay   = document.getElementById('transferModalOverlay');
+const transferPw        = document.getElementById('transferPassword');
+const transferError     = document.getElementById('transferModalError');
+const transferConfirm   = document.getElementById('transferModalConfirm');
+const transferCancel    = document.getElementById('transferModalCancel');
+const transferClose     = document.getElementById('transferModalClose');
+const transferTogglePw  = document.getElementById('transferTogglePw');
+const tEyeShow          = document.getElementById('tEyeShow');
+const tEyeHide          = document.getElementById('tEyeHide');
+
+let verifiedReceiverId   = null;
+let verifiedReceiverName = null;
+let lookupTimer          = null;
+
+// Debounce username lookup as user types
+receiverInput.addEventListener('input', () => {
+    clearTimeout(lookupTimer);
+    const val = receiverInput.value.trim();
+
+    // Reset state
+    receiverError.style.display     = 'none';
+    receiverConfirmed.style.display = 'none';
+    receiverTick.style.display      = 'none';
+    amountSection.style.display     = 'none';
+    verifiedReceiverId              = null;
+    verifiedReceiverName            = null;
+
+    if (!val) return;
+
+    lookupTimer = setTimeout(async () => {
+        try {
+            const res  = await fetch('/lookup_receiver', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content },
+                body: JSON.stringify({ username: val })
+            });
+            const data = await res.json();
+
+            if (data.found) {
+                verifiedReceiverId   = data.user_id;
+                verifiedReceiverName = data.username;
+                receiverConfirmed.textContent  = `✓ Sending to: ${data.username}`;
+                receiverConfirmed.style.display = 'block';
+                receiverTick.style.display      = 'block';
+                amountSection.style.display     = 'flex';
+            } else {
+                receiverError.textContent   = data.message || 'User not found.';
+                receiverError.style.display = 'block';
+            }
+        } catch {
+            receiverError.textContent   = 'Could not verify username. Try again.';
+            receiverError.style.display = 'block';
+        }
+    }, 500); // 500ms debounce
+});
+
+// Transfer BTC/RM live conversion (reuse existing ids)
+const tBTC = document.getElementById("transfer_btc");
+const tRM  = document.getElementById("transfer_rm");
+const tBTCPrice = Number(document.getElementById('transfer_btc_price').value);
+
+if (tBTC && tRM) {
+    tBTC.addEventListener("input", () => { if (tBTC.value) tRM.value  = (parseFloat(tBTC.value) * tBTCPrice).toFixed(2); });
+    tRM.addEventListener("input",  () => { if (tRM.value)  tBTC.value = (parseFloat(tRM.value)  / tBTCPrice).toFixed(8); });
+}
+
+// Transfer button — open confirm modal
+transferBtn.addEventListener('click', () => {
+    if (!verifiedReceiverId) {
+        receiverError.textContent   = 'Please enter a valid receiver username first.';
+        receiverError.style.display = 'block';
+        return;
+    }
+
+    const btcVal = tBTC ? tBTC.value : '';
+    if (!btcVal || parseFloat(btcVal) <= 0) {
+        receiverError.textContent   = 'Enter a BTC amount to transfer.';
+        receiverError.style.display = 'block';
+        return;
+    }
+
+    // Populate modal summary
+    document.getElementById('transferSummaryBTC').textContent  = `${parseFloat(btcVal).toFixed(8)} BTC`;
+    document.getElementById('transferSummaryUser').textContent = verifiedReceiverName;
+
+    transferPw.value = '';
+    transferError.classList.remove('show');
+    transferOverlay.classList.add('active');
+    setTimeout(() => transferPw.focus(), 200);
+});
+
+// Show/hide password in transfer modal
+transferTogglePw.addEventListener('click', () => {
+    if (transferPw.type === 'password') {
+        transferPw.type = 'text';
+        tEyeShow.style.display = 'none';
+        tEyeHide.style.display = '';
+    } else {
+        transferPw.type = 'password';
+        tEyeShow.style.display = '';
+        tEyeHide.style.display = 'none';
+    }
+});
+
+function closeTransferModal() {
+    transferOverlay.classList.remove('active');
+    transferPw.value = '';
+    transferError.classList.remove('show');
+}
+
+transferCancel.addEventListener('click', closeTransferModal);
+transferClose.addEventListener('click', closeTransferModal);
+transferOverlay.addEventListener('click', e => { if (e.target === transferOverlay) closeTransferModal(); });
+
+// Confirm transfer — verify password then POST
+transferConfirm.addEventListener('click', doTransfer);
+transferPw.addEventListener('keydown', e => { if (e.key === 'Enter') doTransfer(); });
+
+async function doTransfer() {
+    const pw = transferPw.value;
+    if (!pw) return;
+
+    transferConfirm.textContent = 'Verifying...';
+    transferConfirm.disabled    = true;
+
+    try {
+        // Step 1 — verify password
+        const pwRes  = await fetch('/verify_password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content },
+            body: JSON.stringify({ password: pw })
+        });
+        const pwData = await pwRes.json();
+
+        if (!pwData.valid) {
+            transferError.textContent = 'Incorrect password. Please try again.';
+            transferError.classList.add('show');
+            transferPw.value = '';
+            transferPw.focus();
+            transferConfirm.textContent = 'Confirm Transfer';
+            transferConfirm.disabled    = false;
+            return;
+        }
+
+        // Step 2 — submit the transfer as a form POST
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/transfer_btc';
+
+        const fields = {
+            csrf_token:   document.querySelector('meta[name="csrf-token"]').content,
+            btc_price:    tBTCPrice,
+            receiver_username: verifiedReceiverName,
+            btc_quantity: tBTC.value,
+            amount_rm:    tRM.value
+        };
+
+        Object.entries(fields).forEach(([name, value]) => {
+            const input   = document.createElement('input');
+            input.type    = 'hidden';
+            input.name    = name;
+            input.value   = value;
+            form.appendChild(input);
+        });
+
+        document.body.appendChild(form);
+        form.submit();
+
+    } catch {
+        transferError.textContent = 'Something went wrong. Try again.';
+        transferError.classList.add('show');
+        transferConfirm.textContent = 'Confirm Transfer';
+        transferConfirm.disabled    = false;
+    }
+}
+</script>
+
+</body>
+</html>

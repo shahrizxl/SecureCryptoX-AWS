@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signup - SecureCryptoX</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Sora:wght@300;400;600&display=swap');
+
+        *, *::before, *::after { box-sizing: border-box; }
+
+        body {
+            font-family: 'Sora', sans-serif;
+            background: #0a0f1e;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-image:
+                radial-gradient(ellipse 600px 400px at 20% 20%, rgba(16,185,129,0.07) 0%, transparent 70%),
+                radial-gradient(ellipse 400px 500px at 80% 80%, rgba(6,182,212,0.06) 0%, transparent 70%);
+        }
+
+        .container {
+            background: #111827;
+            padding: 40px;
+            border-radius: 14px;
+            width: 380px;
+            box-shadow: 0 0 0 1px rgba(255,255,255,0.06), 0 20px 60px rgba(0,0,0,0.5);
+        }
+
+        h1 {
+            font-family: 'Space Mono', monospace;
+            text-align: center;
+            margin: 0 0 28px;
+            font-size: 22px;
+            letter-spacing: -0.5px;
+            color: #f1f5f9;
+        }
+
+        h1 span {
+            color: #10b981;
+        }
+
+        .field {
+            margin-bottom: 14px;
+            position: relative;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 14px;
+            background: #1e293b;
+            border: 1.5px solid #334155;
+            border-radius: 8px;
+            color: white;
+            font-family: 'Sora', sans-serif;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input::placeholder { color: #64748b; }
+
+        input:focus {
+            border-color: #10b981;
+        }
+
+        input.valid {
+            border-color: #10b981;
+        }
+
+        input.invalid {
+            border-color: #ef4444;
+        }
+
+        /* ===== PASSWORD WRAPPER ===== */
+        .password-wrapper {
+            position: relative;
+        }
+
+        .toggle-pw {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #64748b;
+            font-size: 13px;
+            user-select: none;
+            transition: color 0.2s;
+        }
+        .toggle-pw:hover { color: #94a3b8; }
+
+        /* ===== STRENGTH BAR ===== */
+        .strength-bar-wrap {
+            display: flex;
+            gap: 5px;
+            margin-top: 8px;
+        }
+
+        .strength-segment {
+            flex: 1;
+            height: 4px;
+            border-radius: 99px;
+            background: #1e293b;
+            transition: background 0.3s;
+        }
+
+        /* ===== REQUIREMENTS BOX ===== */
+        .req-box {
+            background: #0f172a;
+            border: 1px solid #1e293b;
+            border-radius: 8px;
+            padding: 12px 14px;
+            margin-top: 10px;
+            overflow: hidden;
+            max-height: 0;
+            opacity: 0;
+            transition: max-height 0.35s ease, opacity 0.3s ease, margin 0.3s ease;
+        }
+
+        .req-box.visible {
+            max-height: 200px;
+            opacity: 1;
+        }
+
+        .req-title {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #64748b;
+            margin-bottom: 8px;
+        }
+
+        .req-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .req-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #94a3b8;
+            transition: color 0.25s;
+        }
+
+        .req-item.met {
+            color: #10b981;
+        }
+
+        .req-item .icon {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            flex-shrink: 0;
+            background: #1e293b;
+            transition: background 0.25s;
+        }
+
+        .req-item.met .icon {
+            background: #10b981;
+        }
+
+        /* ===== BUTTON ===== */
+        button[type="submit"] {
+            width: 100%;
+            padding: 13px;
+            border: none;
+            border-radius: 8px;
+            background: #10b981;
+            color: white;
+            font-family: 'Sora', sans-serif;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 18px;
+            transition: background 0.2s, transform 0.1s;
+            letter-spacing: 0.01em;
+        }
+
+        button[type="submit"]:hover { background: #059669; }
+        button[type="submit"]:active { transform: scale(0.99); }
+
+        /* ===== FLASH MESSAGES ===== */
+        .error-msg {
+            background: rgba(239,68,68,0.15);
+            border: 1px solid rgba(239,68,68,0.4);
+            color: #fca5a5;
+            padding: 10px 12px;
+            border-radius: 7px;
+            margin-bottom: 14px;
+            font-size: 13px;
+        }
+
+        .success-msg {
+            background: rgba(34,197,94,0.15);
+            border: 1px solid rgba(34,197,94,0.4);
+            color: #86efac;
+            padding: 10px 12px;
+            border-radius: 7px;
+            margin-bottom: 14px;
+            font-size: 13px;
+        }
+
+        /* ===== LINK ===== */
+        .link {
+            text-align: center;
+            margin-top: 18px;
+            font-size: 13px;
+            color: #64748b;
+        }
+
+        .link a {
+            color: #10b981;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .link a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <h1>Secure<span>Crypto</span>X</h1>
+
+    <!-- Flask flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="{{ category }}-msg">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <form action="/submit_signup" method="POST" id="signupForm">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="field">
+            <input type="text" name="username" id="username" placeholder="Username" required>
+        </div>
+
+        <div class="field">
+            <input type="email" name="email" id="email" placeholder="Email" required>
+        </div>
+
+        <div class="field">
+            <div class="password-wrapper">
+                <input
+                    type="password"
+                    name="password"
+                    id="password"
+                    placeholder="Password"
+                    required
+                    autocomplete="new-password"
+                >
+                <span class="toggle-pw" id="togglePw">show</span>
+            </div>
+
+            <!-- Strength segments -->
+            <div class="strength-bar-wrap" id="strengthBar">
+                <div class="strength-segment" id="seg1"></div>
+                <div class="strength-segment" id="seg2"></div>
+                <div class="strength-segment" id="seg3"></div>
+                <div class="strength-segment" id="seg4"></div>
+                <div class="strength-segment" id="seg5"></div>
+            </div>
+
+            <!-- Requirements box — shown when field is focused or has content -->
+            <div class="req-box" id="reqBox">
+                <div class="req-title">Password must contain</div>
+                <ul class="req-list">
+                    <li class="req-item" id="req-length">
+                        <span class="icon">✕</span>
+                        At least 8 characters
+                    </li>
+                    <li class="req-item" id="req-upper">
+                        <span class="icon">✕</span>
+                        1 uppercase letter (A–Z)
+                    </li>
+                    <li class="req-item" id="req-lower">
+                        <span class="icon">✕</span>
+                        1 lowercase letter (a–z)
+                    </li>
+                    <li class="req-item" id="req-number">
+                        <span class="icon">✕</span>
+                        1 number (0–9)
+                    </li>
+                    <li class="req-item" id="req-special">
+                        <span class="icon">✕</span>
+                        1 special character (!@#$…)
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <button type="submit" id="submitBtn">Create Account</button>
+
+    </form>
+
+    <div class="link">
+        Already have an account? <a href="/">Log in</a>
+    </div>
+
+</div>
+
+<script>
+    const pwInput   = document.getElementById('password');
+    const reqBox    = document.getElementById('reqBox');
+    const togglePw  = document.getElementById('togglePw');
+    const segments  = [
+        document.getElementById('seg1'),
+        document.getElementById('seg2'),
+        document.getElementById('seg3'),
+        document.getElementById('seg4'),
+        document.getElementById('seg5'),
+    ];
+
+    const rules = {
+        'req-length':  { test: v => v.length >= 8 },
+        'req-upper':   { test: v => /[A-Z]/.test(v) },
+        'req-lower':   { test: v => /[a-z]/.test(v) },
+        'req-number':  { test: v => /[0-9]/.test(v) },
+        'req-special': { test: v => /[^A-Za-z0-9]/.test(v) },
+    };
+
+    const strengthColors = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#10b981'];
+
+    function evaluate(value) {
+        let metCount = 0;
+
+        Object.entries(rules).forEach(([id, rule]) => {
+            const item = document.getElementById(id);
+            const icon = item.querySelector('.icon');
+            const met  = rule.test(value);
+
+            if (met) {
+                item.classList.add('met');
+                icon.textContent = '✓';
+                metCount++;
+            } else {
+                item.classList.remove('met');
+                icon.textContent = '✕';
+            }
+        });
+
+        // Update strength bar
+        segments.forEach((seg, i) => {
+            if (i < metCount) {
+                seg.style.background = strengthColors[metCount - 1];
+            } else {
+                seg.style.background = '#1e293b';
+            }
+        });
+
+        // Border feedback
+        if (value.length === 0) {
+            pwInput.classList.remove('valid', 'invalid');
+        } else if (metCount === 5) {
+            pwInput.classList.add('valid');
+            pwInput.classList.remove('invalid');
+        } else {
+            pwInput.classList.add('invalid');
+            pwInput.classList.remove('valid');
+        }
+
+        return metCount === 5;
+    }
+
+    // Show box on focus, hide when empty and blurred
+    pwInput.addEventListener('focus', () => {
+        reqBox.classList.add('visible');
+    });
+
+    pwInput.addEventListener('blur', () => {
+        if (pwInput.value.length === 0) {
+            reqBox.classList.remove('visible');
+        }
+    });
+
+    pwInput.addEventListener('input', () => {
+        evaluate(pwInput.value);
+    });
+
+    // Toggle show/hide password
+    togglePw.addEventListener('click', () => {
+        if (pwInput.type === 'password') {
+            pwInput.type = 'text';
+            togglePw.textContent = 'hide';
+        } else {
+            pwInput.type = 'password';
+            togglePw.textContent = 'show';
+        }
+    });
+
+    // Block form submission if password doesn't pass
+    document.getElementById('signupForm').addEventListener('submit', function(e) {
+        const allMet = evaluate(pwInput.value);
+        if (!allMet) {
+            e.preventDefault();
+            reqBox.classList.add('visible');
+            pwInput.focus();
+        }
+    });
+</script>
+
+</body>
+</html>
