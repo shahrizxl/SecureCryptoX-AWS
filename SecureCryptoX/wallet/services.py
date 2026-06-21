@@ -449,8 +449,8 @@ def calculate_portfolio(user_id):
 
     cursor.execute(
         """
-        SELECT ISNULL(SUM(amount_rm), 0)
-        AS invested
+        SELECT ISNULL(SUM(amount_rm), 0) AS total_bought,
+            ISNULL(SUM(amount_btc), 0) AS total_btc_bought
         FROM Transactions
         WHERE user_id=?
         AND transaction_type='buy'
@@ -458,11 +458,13 @@ def calculate_portfolio(user_id):
         (user_id,)
     )
 
-    # Note: Because you used an aggregate function (SUM) with ISNULL, 
-    # fetchone() will safely return a row with '0' even if there are no transactions.
-    invested = cursor.fetchone().invested
+    buy_row = cursor.fetchone()
 
-    profit = btc_value - invested
+    avg_cost = (buy_row.total_bought / buy_row.total_btc_bought) if buy_row.total_btc_bought else 0
+
+    cost_basis = wallet.balance_btc * avg_cost
+
+    profit = btc_value - cost_basis
 
     return {
         "btc_value": btc_value,
