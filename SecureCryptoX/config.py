@@ -40,3 +40,6 @@ class Config:
         "Encrypt=yes;"
         "TrustServerCertificate=yes;"
     )
+
+#try
+
